@@ -20,20 +20,18 @@
 
 
 #define BUFFER_SIZE 100
-#define NVS_NAMESPACE "buffer_namespace"
+#define NVS_NAMESPACE "storage"
 #define NVS_KEY_LAST_VALUE "last_value"
 
 typedef struct {
     uint8_t buffer[BUFFER_SIZE];
-    uint8_t *head;
-    uint8_t *tail;
-    size_t count;
-    uint8_t *lastAdded;
+    uint8_t sent;
+    uint8_t count;
+    uint8_t lastAdded;
 } CircularBuffer;
 
 void bufferInit(CircularBuffer *cb) {
-    cb->head = cb->buffer;
-    cb->tail = cb->buffer;
+    cb->sent = NULL;
     cb->count = 0;
     cb->lastAdded = NULL;
 }
@@ -71,18 +69,17 @@ uint8_t bufferRead(CircularBuffer *cb) {
 
 void saveLastValue(CircularBuffer *cb) {
     nvs_handle_t nvsHandle;
-    esp_err_t err = nvs_flash_erase();
-    err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvsHandle);
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvsHandle);
     if (err != ESP_OK) {
-        printf("Error al borrar el espacio de almacenamiento NVS: %d\n", err);
+        ESP_LOGI(__FUNCTION__, "Error al borrar el espacio de almacenamiento NVS: %d", err);
         return;
     }
 
-    err = nvs_set_u8(nvsHandle, NVS_KEY_LAST_VALUE, *(cb->lastAdded));
+    err = nvs_set_u8(nvsHandle, NVS_KEY_LAST_VALUE, cb->lastAdded);
     if (err != ESP_OK) {
-        printf("Error al guardar el último valor agregado en NVS: %d\n", err);
+        ESP_LOGI(__FUNCTION__, "Error al guardar el último valor agregado en NVS: %d", err);
     }
-
+    nvs_commit(nvsHandle);
     nvs_close(nvsHandle);
 }
 
@@ -90,20 +87,20 @@ void loadLastValue(CircularBuffer *cb) {
     nvs_handle_t nvsHandle;
     esp_err_t err;
 
-    err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvsHandle);
+    err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvsHandle);
     if (err != ESP_OK) {
-        printf("Error al abrir el espacio de almacenamiento NVS: %d\n", err);
+        ESP_LOGI(__FUNCTION__, "Error al abrir el espacio de almacenamiento NVS: %d", err);
         return;
     }
 
     uint8_t lastValue;
     err = nvs_get_u8(nvsHandle, NVS_KEY_LAST_VALUE, &lastValue);
     if (err == ESP_OK) {
-        *(cb->lastAdded) = lastValue;
+        cb->lastAdded = lastValue;
     } else if (err == ESP_ERR_NVS_NOT_FOUND) {
-        printf("No se encontró el último valor agregado en NVS\n");
+        ESP_LOGI(__FUNCTION__, "No se encontró el último valor agregado en NVS");
     } else {
-        printf("Error al leer el último valor agregado desde NVS\n");
+        ESP_LOGI(__FUNCTION__, "Error al leer el último valor agregado desde NVS");
     }
 
     nvs_close(nvsHandle);
@@ -115,10 +112,16 @@ static const char *TAG = "main";
 void app_main(void)
 {
     ESP_LOGI(TAG, "Hola Mundo");
-    init_sensor();
+    // init_sensor();
 
-
-    nvs_flash_init();
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( err );
 
     CircularBuffer cb;
     bufferInit(&cb);
@@ -136,9 +139,6 @@ void app_main(void)
 
     // Leer y mostrar los datos del buffer
     while (cb.count > 0) {
-        printf("%u ", bufferRead(&cb));
+        ESP_LOGI(__FUNCTION__, "%u", bufferRead(&cb));
     }
-    printf("\n");
 }
-
-//Sensor y sntp

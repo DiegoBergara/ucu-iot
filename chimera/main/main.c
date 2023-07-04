@@ -23,19 +23,29 @@
 #define NVS_NAMESPACE "storage"
 #define NVS_KEY_LAST_VALUE "last_value"
 
+// typedef struct {
+//     uint8_t buffer[BUFFER_SIZE];
+//     uint8_t sent;
+//     uint8_t count;
+//     uint8_t lastAdded;
+//     // tamaño de los datos, checksum
+// } CircularBuffer;
+
 typedef struct {
     uint8_t buffer[BUFFER_SIZE];
-    uint8_t sent;
-    uint8_t count;
-    uint8_t lastAdded;
+    uint8_t *head;
+    uint8_t *tail;
+    size_t count;
+    uint8_t *lastAdded;
 } CircularBuffer;
 
-void bufferInit(CircularBuffer *cb) {
-    cb->sent = NULL;
-    cb->count = 0;
-    cb->lastAdded = NULL;
-}
 
+void bufferInit(CircularBuffer *cb) {
+    cb->head = cb->buffer;
+    cb->tail = cb->buffer;
+    cb->count = 0;
+    cb->lastAdded = 0;
+}
 void bufferWrite(CircularBuffer *cb, uint8_t data) {
     *(cb->head) = data;
     cb->lastAdded = cb->head;

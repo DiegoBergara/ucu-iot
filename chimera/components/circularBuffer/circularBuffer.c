@@ -15,7 +15,7 @@
 CircularBuffer* createBuffer() {
     CircularBuffer* buffer = (CircularBuffer*)malloc(sizeof(CircularBuffer));
     buffer->front = 0;
-    buffer->rear = -1;
+    buffer->rear = 0;
     buffer->count = 0;
     buffer->checksum = 0;
     return buffer;
@@ -42,13 +42,13 @@ void updateChecksum(CircularBuffer* buffer) {
 
 void insertElement(CircularBuffer* buffer, CircularBufferElement element) {
     if (isBufferFull(buffer)) {
-        free(&(buffer->data[99]));
+        free(&(buffer->data[0]));
         buffer->count = 0;
         buffer->rear = 0;
     }
 
-    buffer->rear = (buffer->rear + 1) % BUFFER_SIZE; // CHECKEAR ESTE % BUFFER
     buffer->data[buffer->rear] = element;
+    buffer->rear = (buffer->rear + 1) % BUFFER_SIZE; // CHECKEAR ESTE % BUFFER
     buffer->count++;
     updateChecksum(buffer);
 }
@@ -66,19 +66,12 @@ void saveBufferToFlash(CircularBuffer* buffer) {
     nvs_handle_t nvsHandle;
     esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvsHandle);
     if (err != ESP_OK) {
-        printf("Failed to open NVS handle\n");
         return;
     }
 
     err = nvs_set_blob(nvsHandle, "circular_buffer", buffer, sizeof(CircularBuffer));
-    if (err != ESP_OK) {
-        printf("Failed to set circular buffer in NVS\n");
-    }
 
     err = nvs_commit(nvsHandle);
-    if (err != ESP_OK) {
-        printf("Failed to commit NVS changes\n");
-    }
 
     nvs_close(nvsHandle);
 }
@@ -89,15 +82,11 @@ CircularBuffer* loadBufferFromFlash() {
     nvs_handle_t nvsHandle;
     esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvsHandle);
     if (err != ESP_OK) {
-        printf("Failed to open NVS handle\n");
         return buffer;
     }
 
     size_t bufferSize = sizeof(CircularBuffer);
     err = nvs_get_blob(nvsHandle, "circular_buffer", buffer, &bufferSize);
-    if (err != ESP_OK) {
-        printf("Failed to get circular buffer from NVS\n");
-    }
 
     nvs_close(nvsHandle);
 

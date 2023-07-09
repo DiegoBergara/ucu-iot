@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #ifndef SENSOR_H_
 #define SENSOR_H_
 

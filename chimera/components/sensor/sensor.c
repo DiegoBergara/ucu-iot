@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sensor.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -10,7 +10,7 @@ void sensor_task(void* pParam);
 void init_sensor()
 {
 	sensor_value = 0;
-    xTaskCreate(sensor_task, "sensor_task", 1000, NULL, 10, NULL);
+    xTaskCreate(sensor_task, "sensor_task", 1024, NULL, 10, NULL);
 }
 
 void sensor_task(void* pParam)
@@ -25,6 +25,7 @@ void sensor_task(void* pParam)
 	}
 }
 
+//Usamos esta funcion para simular un sensor de temperatura
 uint16_t get_sensor_value()
 {
     return sensor_value;

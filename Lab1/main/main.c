@@ -10,11 +10,11 @@ void app_main(void)
     while (1)
     {
         set_color("RED");
-        delay_s(5);
+        delay_s(10);
         set_color("GREEN");
-        delay_s(5);
+        delay_s(10);
         set_color("BLUE");
-        delay_s(5);
+        delay_s(10);
     }
     
 }

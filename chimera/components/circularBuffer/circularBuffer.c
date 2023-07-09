@@ -36,48 +36,27 @@ int isBufferFull(CircularBuffer* buffer) {
 void updateChecksum(CircularBuffer* buffer) {
     buffer->checksum = 0;
     for (int i = buffer->front; i <= buffer->rear; i = (i + 1) % BUFFER_SIZE) {
-        buffer->checksum ^= buffer->data[i];
+        buffer->checksum ^= buffer->data[i].value;
     }
 }
 
-void insertElement(CircularBuffer* buffer, uint16_t element) {
+void insertElement(CircularBuffer* buffer, CircularBufferElement element) {
     if (isBufferFull(buffer)) {
-        printf("Error: Buffer is full, unable to insert element.\n");
-        return;
+        free(&(buffer->data[99]));
+        buffer->count = 0;
+        buffer->rear = 0;
     }
 
-    buffer->rear = (buffer->rear + 1) % BUFFER_SIZE;
+    buffer->rear = (buffer->rear + 1) % BUFFER_SIZE; // CHECKEAR ESTE % BUFFER
     buffer->data[buffer->rear] = element;
     buffer->count++;
     updateChecksum(buffer);
 }
 
-uint16_t getLatestElement(CircularBuffer* buffer) {
-    if (isBufferEmpty(buffer)) {
-        printf("Error: Buffer is empty, no elements to retrieve.\n");
-        return 0;  // You can choose a different value to indicate an error condition
-    }
-
-    return buffer->data[buffer->rear];
-}
-
-uint16_t removeLatestElement(CircularBuffer* buffer) {
-    if (isBufferEmpty(buffer)) {
-        return 0;  // You can choose a different value to indicate an error condition
-    }
-
-    uint16_t removedElement = buffer->data[buffer->rear];
-    buffer->rear = (buffer->rear - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-    buffer->count--;
-    updateChecksum(buffer);
-
-    return removedElement;
-}
-
 bool isBufferCorrupted(CircularBuffer* buffer) {
     uint16_t calculatedChecksum = 0;
     for (int i = buffer->front; i <= buffer->rear; i = (i + 1) % BUFFER_SIZE) {
-        calculatedChecksum ^= buffer->data[i];
+        calculatedChecksum ^= buffer->data[i].value;
     }
 
     return calculatedChecksum != buffer->checksum;

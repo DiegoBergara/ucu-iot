@@ -1,9 +1,15 @@
 typedef struct {
-    uint16_t data[100];
+    uint16_t value;
+    char* timestamp;
+} CircularBufferElement;
+
+typedef struct {
+    CircularBufferElement data[100];
     uint16_t checksum;
     int front;
     int rear;
     int count;
+    int sent;
 } CircularBuffer;
 
 CircularBuffer* createBuffer();
@@ -16,11 +22,7 @@ int isBufferFull(CircularBuffer* buffer);
 
 void updateChecksum(CircularBuffer* buffer);
 
-void insertElement(CircularBuffer* buffer, uint16_t element);
-
-uint16_t getLatestElement(CircularBuffer* buffer);
-
-uint16_t removeLatestElement(CircularBuffer* buffer);
+void insertElement(CircularBuffer* buffer, CircularBufferElement element);
 
 bool isBufferCorrupted(CircularBuffer* buffer);
 

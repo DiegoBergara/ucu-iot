@@ -11,6 +11,8 @@
 #include "esp_log.h"
 #include "esp_spiffs.h"
 
+#include "driver/gpio.h"
+
 #include "esp_system.h"
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -25,19 +27,21 @@
 void readSensorTask(void* pvParameters){
     while(1){
         // AGREGAR MUTEX PARA LA LECTURA
-        CircularBuffer* buffer = loadBufferFromFlash();
-        if (isBufferCorrupted(buffer)) {
-            buffer = createBuffer();
-        } else {
-            char* currentTimestamp = getCurrentTime();
+            // CircularBuffer* buffer = loadBufferFromFlash();
+        // if (isBufferCorrupted(buffer)) {
+        //     buffer = createBuffer();
+        // } else {
+            //char* currentTimestamp = getCurrentTime();
             uint16_t currentValue = get_sensor_value();
-            CircularBufferElement* bufferElement = (CircularBufferElement*)malloc(sizeof(CircularBufferElement));
-            bufferElement->value = currentValue;
-            bufferElement->timestamp = currentTimestamp;
-            insertElement(buffer, *bufferElement);
-            saveBufferToFlash(buffer);
-            delay_s(5);
-        }
+            // CircularBufferElement* bufferElement = (CircularBufferElement*)malloc(sizeof(CircularBufferElement));
+            // bufferElement->value = currentValue;
+            ESP_LOGI("hola", "value %d",currentValue);
+            // bufferElement->timestamp = 0;
+            // insertElement(buffer, *bufferElement);
+            // saveBufferToFlash(buffer);
+		    delay_s(5);
+
+//        }
     }
 }
 
@@ -65,6 +69,7 @@ void sendValueTask(void* pvParameters){
 }
 
 void app_main() {
+    init_sensor();
     // Inicia NVS
     esp_err_t nvsErr = nvs_flash_init();
     if (nvsErr == ESP_ERR_NVS_NO_FREE_PAGES || nvsErr == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -75,10 +80,11 @@ void app_main() {
 
     // Iniciar Server y STA-AP
 
-    // Inicia SNTP
-    initSntp();
+    // Inicia SNTP da error por conexi{on}
+    //initSntp();
 
     // Tareas
     xTaskCreate(readSensorTask, "READ_TASK", 5120, NULL, 10, NULL);
-    xTaskCreate(sendValueTask, "SEND_TASK", 5120, NULL, 10, NULL);
+    // da error por conexión
+    //xTaskCreate(sendValueTask, "SEND_TASK", 5120, NULL, 10, NULL);
 }
